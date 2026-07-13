@@ -167,7 +167,16 @@
   }
 
   /* ---------------------------------------------------------
-     VIDEO SECTIONS — each one is a full-screen snap point
+     VIDEO SECTIONS
+     ------------------------------------------------------------
+     There are only two real page sections: this one (id="top"),
+     which holds ALL videos stacked on top of one another inside
+     .hero-stage-wrap, and Contact below it. Only one .hero-stage
+     is ever visible at a time (the one with .is-active); switching
+     between videos happens internally via JS and never moves the
+     page scroll position — so a video that isn't active simply
+     doesn't exist visually until you scroll while your cursor is
+     over the video box itself.
   --------------------------------------------------------- */
   .video-section{
     position:relative;
@@ -184,11 +193,25 @@
     scroll-snap-stop:always;
   }
 
-  .hero-stage{
+  .hero-stage-wrap{
     position:relative;
     width:min(1120px, 84vw);
+  }
+
+  .hero-stage{
+    position:absolute;
+    inset:0;
     display:flex;
     flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .6s var(--ease);
+  }
+
+  .hero-stage.is-active{
+    position:relative;
+    opacity:1;
+    pointer-events:auto;
   }
 
   .hero-frame{
@@ -260,11 +283,11 @@
     color:var(--white);
     white-space:nowrap;
     opacity:0;
-    animation:audioFade 8000ms ease-in-out infinite;
+    animation:audioFade 6000ms ease-in-out infinite;
   }
 
   .audio-indicator span.phrase-b{
-    animation-delay:-4000ms;
+    animation-delay:-3000ms;
   }
 
   @keyframes audioFade{
@@ -538,26 +561,37 @@
 </header>
 
 <!-- ============================================================
-     VIDEO 1
+     VIDEO STAGE
      ------------------------------------------------------------
+     All videos live inside .hero-stage-wrap, stacked on top of
+     each other. Only the one with class="hero-stage is-active"
+     is visible/playable — the others simply don't exist visually
+     until the user scrolls with their cursor over the video box,
+     which advances/retreats through them (see the "carousel"
+     logic in the script below). This section itself only scrolls
+     to Contact (or stays put) via the page-level scroll routing.
+
      HOW TO ADD ANOTHER VIDEO (e.g. a 3rd one):
-       1. Copy this entire <section class="video-section">...</section>
-          block (VIDEO 1) and paste it right after VIDEO 2, below.
-       2. In the pasted copy, change every "1" suffix in the id="..."
-          attributes to "3" (heroVideo1 -> heroVideo3, scrubber1 ->
-          scrubber3, playBtn1 -> playBtn3, etc — there are 9 ids total).
-       3. Change the track label text from "Mach 001" to "Mach 003".
+       1. Copy this entire <div class="hero-stage">...</div> block
+          (VIDEO 2) and paste it right after VIDEO 2, below.
+       2. In the pasted copy, change every "2" suffix in the id="..."
+          attributes to "3" (heroVideo2 -> heroVideo3, scrubber2 ->
+          scrubber3, playBtn2 -> playBtn3, etc — there are 8 ids total).
+       3. Change the track label text from "Mach 002" to "Mach 003".
        4. Drop your new video file (e.g. reel3.mp4) next to this
           index.html file.
-       5. At the bottom of the <script>, find the two calls to
-          initVideoStage({...}) and add a third one, copying the
-          pattern and pointing "src" at your new file and every id
-          at the "3" suffixed ids you just created.
-     That's it — the snap-scrolling, controls, and audio indicator
+       5. At the bottom of the <script>, find VIDEO_2's entry in
+          initVideoStage({...}) and add a third one below it, copying
+          the pattern and pointing "src" at your new file and every id
+          at the "3" suffixed ids you just created. Then add its id
+          to the STAGE_ORDER array further down.
+     That's it — the internal carousel, audio fades, and controls
      are all generic and will work automatically for the new video.
 ============================================================ -->
 <section class="video-section" id="top">
-  <div class="hero-stage" id="heroStage1">
+  <div class="hero-stage-wrap">
+
+  <div class="hero-stage is-active" id="heroStage1">
 
     <div class="hero-frame">
       <video class="hero-media" id="heroVideo1" autoplay muted loop playsinline></video>
@@ -603,16 +637,6 @@
     </div>
   </div>
 
-  <div class="scroll-hint" id="scrollHint">
-    <span>Scroll</span>
-    <svg viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-</section>
-
-<!-- ============================================================
-     VIDEO 2
-============================================================ -->
-<section class="video-section" id="video-2">
   <div class="hero-stage" id="heroStage2">
 
     <div class="hero-frame">
@@ -657,6 +681,13 @@
         </button>
       </div>
     </div>
+  </div>
+
+  </div>
+
+  <div class="scroll-hint" id="scrollHint">
+    <span>Scroll</span>
+    <svg viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
 </section>
 
