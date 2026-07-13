@@ -45,9 +45,7 @@
   }
 
   /* ---------------------------------------------------------
-     PRELOADER — centered name in caps with corner brackets
-     that draw in around it, then expand out to the screen
-     edges and fade away once the page is ready.
+     PRELOADER
   --------------------------------------------------------- */
   #preloader{
     position:fixed;
@@ -102,8 +100,6 @@
     transition:opacity .5s var(--ease);
   }
 
-  /* corner brackets — start collapsed near the text, expand
-     outward to the screen corners on collapse */
   .pl-corner{
     position:fixed;
     width:15px;
@@ -167,7 +163,10 @@
   }
 
   /* ---------------------------------------------------------
-     VIDEO SECTIONS — each one is a full-screen snap point
+     HERO / VIDEO SECTION — single snap point on the page.
+     The video box inside it is its own self-contained scroll
+     zone: wheel/touch input captured there switches between
+     tracks instead of moving the page.
   --------------------------------------------------------- */
   .video-section{
     position:relative;
@@ -197,6 +196,7 @@
     height:min(640px, 62vh);
     background:#000;
     overflow:hidden;
+    cursor:pointer;
   }
 
   .hero-media{
@@ -205,7 +205,15 @@
     width:100%;
     height:100%;
     object-fit:cover;
-    opacity:.72;
+    opacity:0;
+    z-index:1;
+    pointer-events:none;
+    transition:opacity .6s var(--ease);
+  }
+
+  .hero-media.is-front{
+    opacity:1;
+    z-index:2;
   }
 
   .hero-media.placeholder{
@@ -214,19 +222,11 @@
       repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 90px);
   }
 
-  .hero-frame::after{
-    content:'';
-    position:absolute; inset:0;
-    background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.85) 100%);
-    pointer-events:none;
-  }
-
   /* ---------------------------------------------------------
      AUDIO INDICATOR — small crossfading reminder shown over
-     the video while it is muted. Two phrases fade in and out
-     of each other like a lighthouse beacon: a long, soft,
-     steady pulse (~7.5s per full cycle, well under 30 BPM)
-     so each phrase stays readable before it dims.
+     the video while it is muted. Two phrases fade into one
+     another like a slow, steady beacon: 3s readable per
+     phrase, 6s for a full cycle.
   --------------------------------------------------------- */
   .audio-indicator{
     position:absolute;
@@ -260,11 +260,11 @@
     color:var(--white);
     white-space:nowrap;
     opacity:0;
-    animation:audioFade 8000ms ease-in-out infinite;
+    animation:audioFade 6000ms ease-in-out infinite;
   }
 
   .audio-indicator span.phrase-b{
-    animation-delay:-4000ms;
+    animation-delay:-3000ms;
   }
 
   @keyframes audioFade{
@@ -280,16 +280,38 @@
   }
 
   /* ---------------------------------------------------------
+     TRACK SWITCH HINT — subtle, only on the video box itself
+  --------------------------------------------------------- */
+  .track-hint{
+    position:absolute;
+    bottom:14px;
+    left:0;
+    right:0;
+    z-index:3;
+    display:flex;
+    justify-content:center;
+    pointer-events:none;
+    opacity:.55;
+    transition:opacity .4s ease;
+  }
+
+  .track-hint.is-hidden{ opacity:0; }
+
+  .track-hint span{
+    font-size:9px;
+    letter-spacing:.26em;
+    text-transform:uppercase;
+    color:var(--white);
+  }
+
+  /* ---------------------------------------------------------
      CONTROL BAR — sits outside/below the video frame.
-     Mixes the main sans (Inter) with a serif (Times New Roman)
-     for the artist-name style text, like a media player.
-     The thin corner brackets frame this bar only.
   --------------------------------------------------------- */
   .control-bar{
     position:relative;
     width:100%;
     background:#000;
-    padding:20px 24px;
+    padding:13px 20px;
     display:flex;
     align-items:center;
     gap:22px;
@@ -297,14 +319,14 @@
 
   .control-corner{
     position:absolute;
-    width:8px;
-    height:8px;
+    width:6px;
+    height:6px;
     pointer-events:none;
   }
-  .control-corner.tl{ top:-3px; left:-3px; border-top:1px solid var(--white); border-left:1px solid var(--white); }
-  .control-corner.tr{ top:-3px; right:-3px; border-top:1px solid var(--white); border-right:1px solid var(--white); }
-  .control-corner.bl{ bottom:-3px; left:-3px; border-bottom:1px solid var(--white); border-left:1px solid var(--white); }
-  .control-corner.br{ bottom:-3px; right:-3px; border-bottom:1px solid var(--white); border-right:1px solid var(--white); }
+  .control-corner.tl{ top:-2px; left:-2px; border-top:1px solid var(--white); border-left:1px solid var(--white); }
+  .control-corner.tr{ top:-2px; right:-2px; border-top:1px solid var(--white); border-right:1px solid var(--white); }
+  .control-corner.bl{ bottom:-2px; left:-2px; border-bottom:1px solid var(--white); border-left:1px solid var(--white); }
+  .control-corner.br{ bottom:-2px; right:-2px; border-bottom:1px solid var(--white); border-right:1px solid var(--white); }
 
   .control-titles{
     display:flex;
@@ -421,7 +443,7 @@
   .ctrl-btn.is-active .icon-alt{ display:block; }
 
   /* ---------------------------------------------------------
-     SCROLL HINT — minimal cue on the first video only
+     SCROLL HINT — points toward Contact
   --------------------------------------------------------- */
   .scroll-hint{
     position:absolute;
@@ -462,7 +484,7 @@
   }
 
   @media (max-width:720px){
-    .control-bar{ flex-wrap:wrap; padding:16px 16px; gap:12px; }
+    .control-bar{ flex-wrap:wrap; padding:12px 14px; gap:12px; }
     .control-mid{ order:3; width:100%; }
     .control-actions{ gap:14px; }
   }
@@ -538,35 +560,32 @@
 </header>
 
 <!-- ============================================================
-     VIDEO 1
+     VIDEO SECTION
      ------------------------------------------------------------
-     HOW TO ADD ANOTHER VIDEO (e.g. a 3rd one):
-       1. Copy this entire <section class="video-section">...</section>
-          block (VIDEO 1) and paste it right after VIDEO 2, below.
-       2. In the pasted copy, change every "1" suffix in the id="..."
-          attributes to "3" (heroVideo1 -> heroVideo3, scrubber1 ->
-          scrubber3, playBtn1 -> playBtn3, etc — there are 9 ids total).
-       3. Change the track label text from "Mach 001" to "Mach 003".
-       4. Drop your new video file (e.g. reel3.mp4) next to this
-          index.html file.
-       5. At the bottom of the <script>, find the two calls to
-          initVideoStage({...}) and add a third one, copying the
-          pattern and pointing "src" at your new file and every id
-          at the "3" suffixed ids you just created.
-     That's it — the snap-scrolling, controls, and audio indicator
-     are all generic and will work automatically for the new video.
+     There is only ONE video box on the page. Scrolling with the
+     mouse OUTSIDE the box (anywhere else on the page) moves you
+     to the Contact section below, using the browser's normal
+     smooth scroll-snap — nothing custom, so it never feels jagged.
+
+     Scrolling with the mouse INSIDE the video box (on the video
+     itself) instead switches between tracks (Mach 001, Mach 002,
+     ...). Those other tracks are never a separate section of the
+     page and are never visible while scrolling to Contact — they
+     simply don't exist until you scroll on the box to reveal them.
 ============================================================ -->
 <section class="video-section" id="top">
-  <div class="hero-stage" id="heroStage1">
+  <div class="hero-stage" id="heroStage">
 
-    <div class="hero-frame">
-      <video class="hero-media" id="heroVideo1" autoplay muted loop playsinline></video>
-      <div class="audio-indicator" id="audioIndicator1">
+    <div class="hero-frame" id="heroFrame">
+      <video class="hero-media" id="heroVideoA" muted loop playsinline></video>
+      <video class="hero-media" id="heroVideoB" muted loop playsinline></video>
+      <div class="audio-indicator" id="audioIndicator">
         <div class="audio-indicator-inner">
           <span class="phrase-a">Audio Off</span>
           <span class="phrase-b">Click Screen For Audio</span>
         </div>
       </div>
+      <div class="track-hint" id="trackHint"><span>Scroll For Next Video</span></div>
     </div>
 
     <div class="control-bar">
@@ -576,26 +595,26 @@
       <div class="control-corner br"></div>
 
       <div class="control-titles">
-        <span class="control-track">Mach 001</span>
+        <span class="control-track" id="controlTrack">Mach 001</span>
         <span class="control-artist">Apollonia Maria Robin</span>
       </div>
 
       <div class="control-mid">
-        <div class="scrubber" id="scrubber1">
-          <div class="scrub-tooltip" id="scrubTooltip1">0:00</div>
+        <div class="scrubber" id="scrubber">
+          <div class="scrub-tooltip" id="scrubTooltip">0:00</div>
           <div class="track">
-            <div class="fill" id="scrubberFill1"></div>
-            <div class="knob" id="scrubberKnob1"></div>
+            <div class="fill" id="scrubberFill"></div>
+            <div class="knob" id="scrubberKnob"></div>
           </div>
         </div>
       </div>
 
       <div class="control-actions">
-        <button class="ctrl-btn" id="playBtn1" type="button" aria-label="Pause">
+        <button class="ctrl-btn" id="playBtn" type="button" aria-label="Pause">
           <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
           <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
         </button>
-        <button class="ctrl-btn" id="muteBtn1" type="button" aria-label="Unmute">
+        <button class="ctrl-btn" id="muteBtn" type="button" aria-label="Unmute">
           <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
           <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
         </button>
@@ -606,57 +625,6 @@
   <div class="scroll-hint" id="scrollHint">
     <span>Scroll</span>
     <svg viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-</section>
-
-<!-- ============================================================
-     VIDEO 2
-============================================================ -->
-<section class="video-section" id="video-2">
-  <div class="hero-stage" id="heroStage2">
-
-    <div class="hero-frame">
-      <video class="hero-media" id="heroVideo2" muted loop playsinline></video>
-      <div class="audio-indicator" id="audioIndicator2">
-        <div class="audio-indicator-inner">
-          <span class="phrase-a">Audio Off</span>
-          <span class="phrase-b">Click Screen For Audio</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="control-bar">
-      <div class="control-corner tl"></div>
-      <div class="control-corner tr"></div>
-      <div class="control-corner bl"></div>
-      <div class="control-corner br"></div>
-
-      <div class="control-titles">
-        <span class="control-track">Mach 002</span>
-        <span class="control-artist">Apollonia Maria Robin</span>
-      </div>
-
-      <div class="control-mid">
-        <div class="scrubber" id="scrubber2">
-          <div class="scrub-tooltip" id="scrubTooltip2">0:00</div>
-          <div class="track">
-            <div class="fill" id="scrubberFill2"></div>
-            <div class="knob" id="scrubberKnob2"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="control-actions">
-        <button class="ctrl-btn" id="playBtn2" type="button" aria-label="Pause">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
-        </button>
-        <button class="ctrl-btn" id="muteBtn2" type="button" aria-label="Unmute">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -675,12 +643,46 @@
 
 <script>
 /* =====================================================================
-   VIDEO SOURCES — set the file name for each video here.
-   Keep the .mp4 file(s) in the same folder as this index.html.
+   VIDEO TRACKS
+   ---------------------------------------------------------------------
+   One entry per video. "src" is just the filename — keep every video
+   file in the same folder as this index.html (same as reel.mp4 today).
+
+   HOW TO ADD A THIRD VIDEO LATER:
+     1. Add a new line below, e.g.
+          { label: "Mach 003", src: "reel3.mp4" }
+     2. Upload reel3.mp4 into the same GitHub folder as index.html
+        (see upload steps further down this comment).
+     That's the whole change — no other code needs editing. The video
+     box, controls, and audio handling all read from this list.
+
+   HOW TO UPLOAD reel2.mp4 TO GITHUB (same idea you used for reel.mp4
+   with the "Add hero video" commit):
+     1. Open your repository on github.com.
+     2. Make sure you're looking at the same folder that already
+        contains index.html and reel.mp4 (not a subfolder — the file
+        needs to sit right next to index.html for the path below to
+        find it).
+     3. Click "Add file" (top right of the file list) → "Upload files".
+     4. Drag reel2.mp4 into the upload box, or click "choose your
+        files" and select it from your computer.
+     5. Wait for the upload progress bar to finish — don't navigate
+        away while it's uploading.
+     6. Scroll down to "Commit changes". Give it a clear message,
+        e.g. "Add second video", the same way you named the first
+        commit "Add hero video".
+     7. Make sure "Commit directly to the main branch" is selected
+        (unless you're intentionally using a different branch).
+     8. Click "Commit changes".
+     9. Refresh your live site — Mach 002 will now work automatically
+        once you scroll inside the video box, since it's already
+        wired up in the list below.
 ===================================================================== */
 
-const VIDEO_1 = { src: "reel.mp4", poster: "" };
-const VIDEO_2 = { src: "reel2.mp4", poster: "" };
+const TRACKS = [
+  { label: "Mach 001", src: "reel.mp4" },
+  { label: "Mach 002", src: "reel2.mp4" }
+];
 
 /* ===================================================================== */
 
@@ -695,212 +697,427 @@ function formatTime(seconds){
 }
 
 /* ---------------------------------------------------------
-   Generic stage controller — wires up one video + its bar:
-   play/pause, mute/unmute, hover-scrub tooltip, audio
-   indicator, and play-only-when-in-view behaviour.
+   DOM refs — shared control bar, bound to whichever slot is
+   currently "front".
 --------------------------------------------------------- */
-function initVideoStage(cfg){
-  const video = document.getElementById(cfg.videoId);
-  const stage = document.getElementById(cfg.stageId);
-  const frame = video.closest('.hero-frame');
-  const playBtn = document.getElementById(cfg.playBtnId);
-  const muteBtn = document.getElementById(cfg.muteBtnId);
-  const scrubber = document.getElementById(cfg.scrubberId);
-  const scrubberFill = document.getElementById(cfg.scrubberFillId);
-  const scrubberKnob = document.getElementById(cfg.scrubberKnobId);
-  const scrubTooltip = document.getElementById(cfg.scrubTooltipId);
-  const audioIndicator = document.getElementById(cfg.audioIndicatorId);
+const heroFrame = document.getElementById('heroFrame');
+const playBtn = document.getElementById('playBtn');
+const muteBtn = document.getElementById('muteBtn');
+const scrubber = document.getElementById('scrubber');
+const scrubberFill = document.getElementById('scrubberFill');
+const scrubberKnob = document.getElementById('scrubberKnob');
+const scrubTooltip = document.getElementById('scrubTooltip');
+const audioIndicator = document.getElementById('audioIndicator');
+const controlTrackLabel = document.getElementById('controlTrack');
+const trackHint = document.getElementById('trackHint');
 
-  if(cfg.video.src){
-    video.src = cfg.video.src;
-    if(cfg.video.poster) video.poster = cfg.video.poster;
-  } else {
-    video.classList.add('placeholder');
-  }
+/* ---------------------------------------------------------
+   WEB AUDIO — a shared "large church" reverb impulse and a
+   per-video signal chain (dry path + filtered/reverbed wet
+   path) so a video that's been scrolled away from can fade
+   out through a slow, muffled, reverberant tail instead of
+   cutting instantly, while it keeps playing silently on
+   screen underneath the current track.
+--------------------------------------------------------- */
+let audioCtx = null;
+let reverbBuffer = null;
 
-  function updatePlayIcon(){
-    playBtn.classList.toggle('is-active', video.paused);
-    playBtn.setAttribute('aria-label', video.paused ? 'Play' : 'Pause');
-  }
+const FADE_SLOW = 6.5;     // seconds — lingering fade when nothing new has been unmuted yet
+const FADE_FAST = 0.6;     // seconds — quick cutoff once the next video is unmuted
+const FADE_CONTACT = 9;    // seconds — extra-long linger when leaving to Contact
 
-  function updateMuteIcon(){
-    muteBtn.classList.toggle('is-active', video.muted);
-    muteBtn.setAttribute('aria-label', video.muted ? 'Unmute' : 'Mute');
-    audioIndicator.classList.toggle('is-hidden', !video.muted);
-  }
-
-  function togglePlay(){
-    if(video.paused){ video.play(); } else { video.pause(); }
-    updatePlayIcon();
-  }
-
-  function unmute(){
-    video.muted = false;
-    updateMuteIcon();
-  }
-
-  function toggleMute(){
-    video.muted = !video.muted;
-    updateMuteIcon();
-  }
-
-  playBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
-  muteBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
-
-  /* First tap/click on the video frame unmutes it.
-     Once unmuted, tapping the frame toggles play/pause. */
-  frame.addEventListener('click', () => {
-    if(video.muted){
-      unmute();
-    } else {
-      togglePlay();
-    }
-  });
-
-  function setScrubber(ratio){
-    const pct = Math.min(1, Math.max(0, ratio)) * 100;
-    scrubberFill.style.width = pct + '%';
-    scrubberKnob.style.left = pct + '%';
-  }
-
-  /* Hover/scrub tooltip — shows the time at the cursor's position
-     along the scrubber, right above the cursor. Only visible while
-     hovering or actively dragging; hidden the rest of the time. */
-  function updateTooltip(ratio){
-    const clamped = Math.min(1, Math.max(0, ratio));
-    const t = video.duration ? clamped * video.duration : 0;
-    scrubTooltip.textContent = formatTime(t);
-    scrubTooltip.style.left = (clamped * 100) + '%';
-  }
-
-  function ratioFromEvent(e){
-    const rect = scrubber.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    return (clientX - rect.left) / rect.width;
-  }
-
-  let isScrubbing = false;
-
-  video.addEventListener('timeupdate', () => {
-    if(!video.duration || isScrubbing) return;
-    setScrubber(video.currentTime / video.duration);
-  });
-
-  video.addEventListener('play', updatePlayIcon);
-  video.addEventListener('pause', updatePlayIcon);
-  video.addEventListener('volumechange', updateMuteIcon);
-
-  function seekFromEvent(e){
-    const ratio = ratioFromEvent(e);
-    setScrubber(ratio);
-    updateTooltip(ratio);
-    if(video.duration){
-      video.currentTime = Math.min(1, Math.max(0, ratio)) * video.duration;
+function createChurchImpulse(ctx){
+  const duration = 4.2;
+  const decay = 3.2;
+  const rate = ctx.sampleRate;
+  const length = Math.floor(rate * duration);
+  const impulse = ctx.createBuffer(2, length, rate);
+  for(let ch = 0; ch < 2; ch++){
+    const data = impulse.getChannelData(ch);
+    for(let i = 0; i < length; i++){
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
     }
   }
-
-  scrubber.addEventListener('mousedown', (e) => {
-    isScrubbing = true;
-    scrubTooltip.classList.add('is-visible');
-    seekFromEvent(e);
-  });
-  scrubber.addEventListener('touchstart', (e) => {
-    isScrubbing = true;
-    scrubTooltip.classList.add('is-visible');
-    seekFromEvent(e);
-  }, { passive:true });
-
-  scrubber.addEventListener('mouseenter', () => scrubTooltip.classList.add('is-visible'));
-  scrubber.addEventListener('mousemove', (e) => { if(!isScrubbing) updateTooltip(ratioFromEvent(e)); });
-  scrubber.addEventListener('mouseleave', () => { if(!isScrubbing) scrubTooltip.classList.remove('is-visible'); });
-
-  window.addEventListener('mousemove', (e) => { if(isScrubbing) seekFromEvent(e); });
-  window.addEventListener('touchmove', (e) => { if(isScrubbing) seekFromEvent(e); }, { passive:true });
-  window.addEventListener('mouseup', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
-  window.addEventListener('touchend', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
-
-  /* Play only while this video is actually on screen. */
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if(entry.isIntersecting && entry.intersectionRatio > .6){
-        video.play();
-      } else {
-        video.pause();
-      }
-    });
-  }, { threshold:[0, .6, 1] });
-  observer.observe(stage);
-
-  updatePlayIcon();
-  updateMuteIcon();
+  return impulse;
 }
 
-initVideoStage({
-  video: VIDEO_1,
-  videoId: 'heroVideo1', stageId: 'heroStage1',
-  playBtnId: 'playBtn1', muteBtnId: 'muteBtn1',
-  scrubberId: 'scrubber1', scrubberFillId: 'scrubberFill1', scrubberKnobId: 'scrubberKnob1',
-  scrubTooltipId: 'scrubTooltip1', audioIndicatorId: 'audioIndicator1'
-});
+function ensureAudioContext(){
+  if(audioCtx) {
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return;
+  }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  reverbBuffer = createChurchImpulse(audioCtx);
+  slots.forEach(attachChain);
+}
 
-initVideoStage({
-  video: VIDEO_2,
-  videoId: 'heroVideo2', stageId: 'heroStage2',
-  playBtnId: 'playBtn2', muteBtnId: 'muteBtn2',
-  scrubberId: 'scrubber2', scrubberFillId: 'scrubberFill2', scrubberKnobId: 'scrubberKnob2',
-  scrubTooltipId: 'scrubTooltip2', audioIndicatorId: 'audioIndicator2'
+function attachChain(slot){
+  if(slot.chain) return;
+  const source = audioCtx.createMediaElementSource(slot.video);
+  const dryGain = audioCtx.createGain();
+  const wetGain = audioCtx.createGain();
+  const masterGain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 18000;
+  const convolver = audioCtx.createConvolver();
+  convolver.buffer = reverbBuffer;
+
+  dryGain.gain.value = 1;
+  wetGain.gain.value = 0;
+  masterGain.gain.value = 0;
+
+  source.connect(dryGain);
+  source.connect(filter);
+  filter.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(masterGain);
+  wetGain.connect(masterGain);
+  masterGain.connect(audioCtx.destination);
+
+  slot.chain = { dryGain, wetGain, masterGain, filter, convolver };
+}
+
+function rampParam(param, target, duration){
+  const now = audioCtx.currentTime;
+  param.cancelScheduledValues(now);
+  param.setValueAtTime(param.value, now);
+  param.linearRampToValueAtTime(target, now + duration);
+}
+
+function resetSlotDry(slot){
+  clearTimeout(slot.fadeTimer);
+  slot.fading = false;
+  if(!slot.chain) return;
+  const { dryGain, wetGain, masterGain, filter } = slot.chain;
+  const now = audioCtx.currentTime;
+  [dryGain.gain, wetGain.gain, masterGain.gain, filter.frequency].forEach(p => p.cancelScheduledValues(now));
+  dryGain.gain.setValueAtTime(1, now);
+  wetGain.gain.setValueAtTime(0, now);
+  filter.frequency.setValueAtTime(18000, now);
+  masterGain.gain.setValueAtTime(slot.audible ? 1 : 0, now);
+}
+
+function cancelFadeAndRestore(slot){
+  clearTimeout(slot.fadeTimer);
+  slot.fading = false;
+  if(!slot.chain) return;
+  const { dryGain, wetGain, masterGain, filter } = slot.chain;
+  rampParam(dryGain.gain, 1, .3);
+  rampParam(wetGain.gain, 0, .3);
+  rampParam(filter.frequency, 18000, .3);
+  rampParam(masterGain.gain, slot.audible ? 1 : 0, .3);
+}
+
+function reverbFadeOut(slot, duration){
+  if(!slot.chain) return;
+  const { dryGain, wetGain, masterGain, filter } = slot.chain;
+  const onset = Math.min(1.1, duration * 0.4);
+  rampParam(dryGain.gain, 0, onset);
+  rampParam(wetGain.gain, .8, onset);
+  rampParam(filter.frequency, 500, onset);
+  rampParam(masterGain.gain, 0, duration);
+
+  slot.fading = true;
+  clearTimeout(slot.fadeTimer);
+  slot.fadeTimer = setTimeout(() => {
+    slot.fading = false;
+    slot.audible = false;
+    resetSlotDry(slot);
+    slot.video.pause();
+  }, duration * 1000 + 60);
+}
+
+function accelerateReverbFadeOut(slot){
+  if(!slot.chain || !slot.fading) return;
+  clearTimeout(slot.fadeTimer);
+  rampParam(slot.chain.masterGain.gain, 0, FADE_FAST);
+  slot.fadeTimer = setTimeout(() => {
+    slot.fading = false;
+    slot.audible = false;
+    resetSlotDry(slot);
+    slot.video.pause();
+  }, FADE_FAST * 1000 + 60);
+}
+
+function quickSetAudible(slot, audible){
+  slot.audible = audible;
+  if(!slot.chain){
+    if(audible) ensureAudioContext();
+  }
+  if(slot.chain){
+    rampParam(slot.chain.dryGain.gain, 1, .15);
+    rampParam(slot.chain.masterGain.gain, audible ? 1 : 0, audible ? .15 : .25);
+  }
+}
+
+/* ---------------------------------------------------------
+   SLOTS — two persistent <video> elements. One is "front"
+   (visible, controllable) and one is "back" (hidden, either
+   idle or fading out its audio from a moment ago). Switching
+   tracks swaps which is which and reassigns the back slot's
+   src to the next track, rather than creating new elements.
+--------------------------------------------------------- */
+function makeSlot(videoId){
+  const video = document.getElementById(videoId);
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  const slot = { video, chain: null, audible: false, fading: false, fadeTimer: null, trackIndex: -1 };
+
+  video.addEventListener('timeupdate', () => {
+    if(getFrontSlot() !== slot || isScrubbing) return;
+    if(video.duration) setScrubber(video.currentTime / video.duration);
+  });
+  video.addEventListener('play', () => { if(getFrontSlot() === slot) updatePlayIcon(slot); });
+  video.addEventListener('pause', () => { if(getFrontSlot() === slot) updatePlayIcon(slot); });
+
+  return slot;
+}
+
+const slotA = makeSlot('heroVideoA');
+const slotB = makeSlot('heroVideoB');
+const slots = [slotA, slotB];
+
+let frontSlot = slotA;
+let backSlot = slotB;
+let currentIndex = 0;
+
+function getFrontSlot(){ return frontSlot; }
+
+function loadTrackIntoSlot(slot, index){
+  slot.trackIndex = index;
+  slot.audible = false;
+  resetSlotDry(slot);
+  slot.video.src = TRACKS[index].src;
+  slot.video.currentTime = 0;
+  slot.video.play().catch(() => {});
+}
+
+/* Boot the first track into the front slot. */
+loadTrackIntoSlot(frontSlot, 0);
+frontSlot.video.classList.add('is-front');
+backSlot.video.classList.remove('is-front');
+
+/* ---------------------------------------------------------
+   UI updates
+--------------------------------------------------------- */
+function updatePlayIcon(slot){
+  playBtn.classList.toggle('is-active', slot.video.paused);
+  playBtn.setAttribute('aria-label', slot.video.paused ? 'Play' : 'Pause');
+}
+
+function updateMuteIcon(slot){
+  muteBtn.classList.toggle('is-active', !slot.audible);
+  muteBtn.setAttribute('aria-label', slot.audible ? 'Mute' : 'Unmute');
+  audioIndicator.classList.toggle('is-hidden', slot.audible);
+}
+
+function setScrubber(ratio){
+  const pct = Math.min(1, Math.max(0, ratio)) * 100;
+  scrubberFill.style.width = pct + '%';
+  scrubberKnob.style.left = pct + '%';
+}
+
+function refreshControlsForFront(){
+  const slot = frontSlot;
+  controlTrackLabel.textContent = TRACKS[slot.trackIndex].label;
+  setScrubber(slot.video.duration ? slot.video.currentTime / slot.video.duration : 0);
+  updatePlayIcon(slot);
+  updateMuteIcon(slot);
+}
+
+refreshControlsForFront();
+
+/* ---------------------------------------------------------
+   Playback controls — always act on the front slot.
+--------------------------------------------------------- */
+function togglePlay(){
+  const v = frontSlot.video;
+  if(v.paused){ v.play(); } else { v.pause(); }
+}
+
+function toggleFrontAudible(){
+  ensureAudioContext();
+  if(frontSlot.audible){
+    quickSetAudible(frontSlot, false);
+  } else {
+    quickSetAudible(frontSlot, true);
+    if(backSlot.fading) accelerateReverbFadeOut(backSlot);
+  }
+  updateMuteIcon(frontSlot);
+}
+
+playBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+muteBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleFrontAudible(); });
+
+heroFrame.addEventListener('click', (e) => {
+  if(e.target.closest('.control-bar')) return;
+  if(!frontSlot.audible){
+    toggleFrontAudible();
+  } else {
+    togglePlay();
+  }
 });
 
 /* ---------------------------------------------------------
-   SCROLL ROUTING
-   - Wheel/touch input while the pointer is over a video
-     stage (.hero-stage) uses the normal snap-scroll behaviour,
-     moving one video at a time.
-   - Wheel/touch input anywhere else (the surrounding black
-     letterboxing) jumps straight to the Contact section, so
-     it's always one scroll away and never gets "stuck" behind
-     the video snap points. Scrolling up from outside a stage
-     returns straight to the top video.
+   Scrubber — hover tooltip in Times New Roman, click/drag
+   to seek. No persistent time readout on the bar itself.
 --------------------------------------------------------- */
-const topSection = document.getElementById('top');
-const contactSection = document.getElementById('contact');
+let isScrubbing = false;
 
-window.addEventListener('wheel', (e) => {
-  if(e.target.closest('.hero-stage')) return; // let normal snap-scrolling happen
+function updateTooltip(ratio){
+  const clamped = Math.min(1, Math.max(0, ratio));
+  const v = frontSlot.video;
+  const t = v.duration ? clamped * v.duration : 0;
+  scrubTooltip.textContent = formatTime(t);
+  scrubTooltip.style.left = (clamped * 100) + '%';
+}
+
+function ratioFromEvent(e){
+  const rect = scrubber.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  return (clientX - rect.left) / rect.width;
+}
+
+function seekFromEvent(e){
+  const ratio = ratioFromEvent(e);
+  setScrubber(ratio);
+  updateTooltip(ratio);
+  const v = frontSlot.video;
+  if(v.duration) v.currentTime = Math.min(1, Math.max(0, ratio)) * v.duration;
+}
+
+scrubber.addEventListener('mousedown', (e) => {
+  isScrubbing = true;
+  scrubTooltip.classList.add('is-visible');
+  seekFromEvent(e);
+});
+scrubber.addEventListener('touchstart', (e) => {
+  isScrubbing = true;
+  scrubTooltip.classList.add('is-visible');
+  seekFromEvent(e);
+}, { passive:true });
+
+scrubber.addEventListener('mouseenter', () => scrubTooltip.classList.add('is-visible'));
+scrubber.addEventListener('mousemove', (e) => { if(!isScrubbing) updateTooltip(ratioFromEvent(e)); });
+scrubber.addEventListener('mouseleave', () => { if(!isScrubbing) scrubTooltip.classList.remove('is-visible'); });
+
+window.addEventListener('mousemove', (e) => { if(isScrubbing) seekFromEvent(e); });
+window.addEventListener('touchmove', (e) => { if(isScrubbing) seekFromEvent(e); }, { passive:true });
+window.addEventListener('mouseup', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
+window.addEventListener('touchend', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
+
+/* ---------------------------------------------------------
+   TRACK SWITCHING — wheel/touch captured entirely inside the
+   video box. Never lets the outer page move; only changes
+   which track is showing.
+--------------------------------------------------------- */
+function switchTrack(nextIndex){
+  if(nextIndex === currentIndex || nextIndex < 0 || nextIndex >= TRACKS.length) return;
+
+  const incoming = backSlot;
+  const outgoing = frontSlot;
+
+  loadTrackIntoSlot(incoming, nextIndex);
+  incoming.video.classList.add('is-front');
+  outgoing.video.classList.remove('is-front');
+
+  if(outgoing.audible){
+    reverbFadeOut(outgoing, FADE_SLOW);
+  } else {
+    resetSlotDry(outgoing);
+  }
+
+  frontSlot = incoming;
+  backSlot = outgoing;
+  currentIndex = nextIndex;
+
+  refreshControlsForFront();
+}
+
+let switchLocked = false;
+function lockSwitching(ms){
+  switchLocked = true;
+  setTimeout(() => { switchLocked = false; }, ms);
+}
+
+heroFrame.addEventListener('wheel', (e) => {
   e.preventDefault();
-  const target = e.deltaY > 0 ? contactSection : topSection;
-  target.scrollIntoView({ behavior:'smooth' });
+  e.stopPropagation();
+  if(switchLocked) return;
+  if(Math.abs(e.deltaY) < 4) return;
+  const dir = e.deltaY > 0 ? 1 : -1;
+  const next = currentIndex + dir;
+  if(next < 0 || next >= TRACKS.length) return;
+  lockSwitching(700);
+  switchTrack(next);
 }, { passive:false });
 
-let touchStartY = 0;
-let touchStartTarget = null;
-
-window.addEventListener('touchstart', (e) => {
-  touchStartY = e.touches[0].clientY;
-  touchStartTarget = e.target;
+let boxTouchStartY = null;
+heroFrame.addEventListener('touchstart', (e) => {
+  boxTouchStartY = e.touches[0].clientY;
 }, { passive:true });
 
-window.addEventListener('touchend', (e) => {
-  if(touchStartTarget && touchStartTarget.closest('.hero-stage')) return; // let normal snap-scrolling happen
-  const deltaY = touchStartY - e.changedTouches[0].clientY;
-  if(Math.abs(deltaY) < 30) return; // ignore taps
-  const target = deltaY > 0 ? contactSection : topSection;
-  target.scrollIntoView({ behavior:'smooth' });
+heroFrame.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive:false });
+
+heroFrame.addEventListener('touchend', (e) => {
+  if(boxTouchStartY === null || switchLocked) return;
+  const deltaY = boxTouchStartY - e.changedTouches[0].clientY;
+  boxTouchStartY = null;
+  if(Math.abs(deltaY) < 40) return;
+  const dir = deltaY > 0 ? 1 : -1;
+  const next = currentIndex + dir;
+  if(next < 0 || next >= TRACKS.length) return;
+  lockSwitching(700);
+  switchTrack(next);
 }, { passive:true });
 
-/* Fade out the scroll hint once the user has scrolled past video 1 */
+/* ---------------------------------------------------------
+   Leaving to Contact — the front video keeps playing, and if
+   it was audible its audio lingers and fades gradually
+   through the same reverb tail rather than cutting.
+--------------------------------------------------------- */
+const heroSection = document.getElementById('top');
+const contactObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if(entry.isIntersecting){
+      if(frontSlot.fading) cancelFadeAndRestore(frontSlot);
+    } else if(frontSlot.audible){
+      reverbFadeOut(frontSlot, FADE_CONTACT);
+    }
+  });
+}, { threshold: [0, .4, 1] });
+contactObserver.observe(heroSection);
+
+/* Resume the audio context on the first interaction anywhere,
+   satisfying browser autoplay-with-sound requirements. */
+document.addEventListener('pointerdown', () => {
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}, { once:false });
+
+/* Fade the scroll hint once the user has scrolled past the video section */
 const scrollHint = document.getElementById('scrollHint');
 const hintObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     scrollHint.classList.toggle('is-hidden', entry.intersectionRatio < .95);
   });
 }, { threshold:[0, .95, 1] });
-hintObserver.observe(document.getElementById('top'));
+hintObserver.observe(heroSection);
+
+/* Fade the "scroll for next video" hint after first interaction inside the box */
+let trackHintShown = true;
+heroFrame.addEventListener('wheel', () => {
+  if(trackHintShown){
+    trackHintShown = false;
+    trackHint.classList.add('is-hidden');
+  }
+}, { passive:true });
 
 /* ---------------------------------------------------------
-   PRELOADER — corner brackets draw in around the name, then
-   expand out to the screen edges and fade once the page has
-   finished loading.
+   PRELOADER
 --------------------------------------------------------- */
 const preloader = document.getElementById('preloader');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -921,8 +1138,6 @@ if(reduceMotion){
   }
 
   window.addEventListener('load', () => { setTimeout(finishLoad, 500); });
-
-  /* fallback in case the load event is delayed or never fires */
   setTimeout(finishLoad, 3200);
 }
 </script>
