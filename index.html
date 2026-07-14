@@ -167,7 +167,17 @@
   }
 
   /* ---------------------------------------------------------
-     VIDEO SECTIONS — each one is a full-screen snap point
+     VIDEO SECTION
+     ------------------------------------------------------------
+     There are only two real page sections: this one (id="top"),
+     which holds ALL videos stacked on top of one another inside
+     .hero-stage-wrap, and Contact below it. Only one .hero-stage
+     is ever visible at a time (the one with .is-active) — the
+     others simply don't exist visually until the user scrolls
+     with their cursor over the video box itself, which advances
+     through them one at a time. Scrolling anywhere outside the
+     video box always goes straight to Contact (or back to video
+     one), so you never see another video "underneath".
   --------------------------------------------------------- */
   .video-section{
     position:relative;
@@ -184,11 +194,26 @@
     scroll-snap-stop:always;
   }
 
-  .hero-stage{
+  .hero-stage-wrap{
     position:relative;
     width:min(1120px, 84vw);
+  }
+
+  .hero-stage{
+    position:absolute;
+    inset:0;
     display:flex;
     flex-direction:column;
+    gap:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .6s var(--ease);
+  }
+
+  .hero-stage.is-active{
+    position:relative;
+    opacity:1;
+    pointer-events:auto;
   }
 
   .hero-frame{
@@ -214,19 +239,12 @@
       repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 90px);
   }
 
-  .hero-frame::after{
-    content:'';
-    position:absolute; inset:0;
-    background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.85) 100%);
-    pointer-events:none;
-  }
-
   /* ---------------------------------------------------------
      AUDIO INDICATOR — small crossfading reminder shown over
      the video while it is muted. Two phrases fade in and out
-     of each other like a lighthouse beacon: a long, soft,
-     steady pulse (~7.5s per full cycle, well under 30 BPM)
-     so each phrase stays readable before it dims.
+     of each other like a lighthouse beacon: each one fully
+     disappears before the next fades in — no overlap — over a
+     3s-per-phrase / 6s full-cycle pulse, slow enough to read.
   --------------------------------------------------------- */
   .audio-indicator{
     position:absolute;
@@ -260,11 +278,11 @@
     color:var(--white);
     white-space:nowrap;
     opacity:0;
-    animation:audioFade 8000ms ease-in-out infinite;
+    animation:audioFade 6000ms ease-in-out infinite;
   }
 
   .audio-indicator span.phrase-b{
-    animation-delay:-4000ms;
+    animation-delay:-3000ms;
   }
 
   @keyframes audioFade{
@@ -280,7 +298,8 @@
   }
 
   /* ---------------------------------------------------------
-     CONTROL BAR — sits outside/below the video frame.
+     CONTROL BAR — sits below the video frame, separated by a
+     visible gap so it never touches or sits behind the video.
      Mixes the main sans (Inter) with a serif (Times New Roman)
      for the artist-name style text, like a media player.
      The thin corner brackets frame this bar only.
@@ -297,14 +316,14 @@
 
   .control-corner{
     position:absolute;
-    width:8px;
-    height:8px;
+    width:7px;
+    height:7px;
     pointer-events:none;
   }
-  .control-corner.tl{ top:-3px; left:-3px; border-top:1px solid var(--white); border-left:1px solid var(--white); }
-  .control-corner.tr{ top:-3px; right:-3px; border-top:1px solid var(--white); border-right:1px solid var(--white); }
-  .control-corner.bl{ bottom:-3px; left:-3px; border-bottom:1px solid var(--white); border-left:1px solid var(--white); }
-  .control-corner.br{ bottom:-3px; right:-3px; border-bottom:1px solid var(--white); border-right:1px solid var(--white); }
+  .control-corner.tl{ top:-2px; left:-2px; border-top:1px solid var(--white); border-left:1px solid var(--white); }
+  .control-corner.tr{ top:-2px; right:-2px; border-top:1px solid var(--white); border-right:1px solid var(--white); }
+  .control-corner.bl{ bottom:-2px; left:-2px; border-bottom:1px solid var(--white); border-left:1px solid var(--white); }
+  .control-corner.br{ bottom:-2px; right:-2px; border-bottom:1px solid var(--white); border-right:1px solid var(--white); }
 
   .control-titles{
     display:flex;
@@ -421,7 +440,7 @@
   .ctrl-btn.is-active .icon-alt{ display:block; }
 
   /* ---------------------------------------------------------
-     SCROLL HINT — minimal cue on the first video only
+     SCROLL HINT — minimal cue shown while on video one
   --------------------------------------------------------- */
   .scroll-hint{
     position:absolute;
@@ -538,125 +557,231 @@
 </header>
 
 <!-- ============================================================
-     VIDEO 1
+     VIDEO STAGE
      ------------------------------------------------------------
-     HOW TO ADD ANOTHER VIDEO (e.g. a 3rd one):
-       1. Copy this entire <section class="video-section">...</section>
-          block (VIDEO 1) and paste it right after VIDEO 2, below.
-       2. In the pasted copy, change every "1" suffix in the id="..."
-          attributes to "3" (heroVideo1 -> heroVideo3, scrubber1 ->
-          scrubber3, playBtn1 -> playBtn3, etc — there are 9 ids total).
-       3. Change the track label text from "Mach 001" to "Mach 003".
-       4. Drop your new video file (e.g. reel3.mp4) next to this
-          index.html file.
-       5. At the bottom of the <script>, find the two calls to
-          initVideoStage({...}) and add a third one, copying the
-          pattern and pointing "src" at your new file and every id
-          at the "3" suffixed ids you just created.
-     That's it — the snap-scrolling, controls, and audio indicator
-     are all generic and will work automatically for the new video.
+     All five video slots (Mach 001–005) live stacked inside
+     .hero-stage-wrap below. Only the one with "is-active" is
+     visible — the rest don't exist visually until the user
+     scrolls with their cursor INSIDE this video box, which the
+     script below turns into "advance to the next/previous video"
+     instead of a normal page scroll. Scrolling anywhere outside
+     the box (the black space around it) goes straight to the
+     Contact section instead — you'll never see another video
+     appear underneath this one.
 ============================================================ -->
 <section class="video-section" id="top">
-  <div class="hero-stage" id="heroStage1">
+  <div class="hero-stage-wrap">
 
-    <div class="hero-frame">
-      <video class="hero-media" id="heroVideo1" autoplay muted loop playsinline></video>
-      <div class="audio-indicator" id="audioIndicator1">
-        <div class="audio-indicator-inner">
-          <span class="phrase-a">Audio Off</span>
-          <span class="phrase-b">Click Screen For Audio</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="control-bar">
-      <div class="control-corner tl"></div>
-      <div class="control-corner tr"></div>
-      <div class="control-corner bl"></div>
-      <div class="control-corner br"></div>
-
-      <div class="control-titles">
-        <span class="control-track">Mach 001</span>
-        <span class="control-artist">Apollonia Maria Robin</span>
-      </div>
-
-      <div class="control-mid">
-        <div class="scrubber" id="scrubber1">
-          <div class="scrub-tooltip" id="scrubTooltip1">0:00</div>
-          <div class="track">
-            <div class="fill" id="scrubberFill1"></div>
-            <div class="knob" id="scrubberKnob1"></div>
+    <div class="hero-stage is-active" id="heroStage1">
+      <div class="hero-frame">
+        <video class="hero-media" id="heroVideo1" autoplay muted loop playsinline></video>
+        <div class="audio-indicator" id="audioIndicator1">
+          <div class="audio-indicator-inner">
+            <span class="phrase-a">Audio Off</span>
+            <span class="phrase-b">Click Screen For Audio</span>
           </div>
         </div>
       </div>
-
-      <div class="control-actions">
-        <button class="ctrl-btn" id="playBtn1" type="button" aria-label="Pause">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
-        </button>
-        <button class="ctrl-btn" id="muteBtn1" type="button" aria-label="Unmute">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-        </button>
+      <div class="control-bar">
+        <div class="control-corner tl"></div>
+        <div class="control-corner tr"></div>
+        <div class="control-corner bl"></div>
+        <div class="control-corner br"></div>
+        <div class="control-titles">
+          <span class="control-track">Mach 001</span>
+          <span class="control-artist">Apollonia Maria Robin</span>
+        </div>
+        <div class="control-mid">
+          <div class="scrubber" id="scrubber1">
+            <div class="scrub-tooltip" id="scrubTooltip1">0:00</div>
+            <div class="track">
+              <div class="fill" id="scrubberFill1"></div>
+              <div class="knob" id="scrubberKnob1"></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="ctrl-btn" id="playBtn1" type="button" aria-label="Pause">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="ctrl-btn" id="muteBtn1" type="button" aria-label="Unmute">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
       </div>
     </div>
+
+    <div class="hero-stage" id="heroStage2">
+      <div class="hero-frame">
+        <video class="hero-media" id="heroVideo2" muted loop playsinline></video>
+        <div class="audio-indicator" id="audioIndicator2">
+          <div class="audio-indicator-inner">
+            <span class="phrase-a">Audio Off</span>
+            <span class="phrase-b">Click Screen For Audio</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-bar">
+        <div class="control-corner tl"></div>
+        <div class="control-corner tr"></div>
+        <div class="control-corner bl"></div>
+        <div class="control-corner br"></div>
+        <div class="control-titles">
+          <span class="control-track">Mach 002</span>
+          <span class="control-artist">Apollonia Maria Robin</span>
+        </div>
+        <div class="control-mid">
+          <div class="scrubber" id="scrubber2">
+            <div class="scrub-tooltip" id="scrubTooltip2">0:00</div>
+            <div class="track">
+              <div class="fill" id="scrubberFill2"></div>
+              <div class="knob" id="scrubberKnob2"></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="ctrl-btn" id="playBtn2" type="button" aria-label="Pause">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="ctrl-btn" id="muteBtn2" type="button" aria-label="Unmute">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stage" id="heroStage3">
+      <div class="hero-frame">
+        <video class="hero-media" id="heroVideo3" muted loop playsinline></video>
+        <div class="audio-indicator" id="audioIndicator3">
+          <div class="audio-indicator-inner">
+            <span class="phrase-a">Audio Off</span>
+            <span class="phrase-b">Click Screen For Audio</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-bar">
+        <div class="control-corner tl"></div>
+        <div class="control-corner tr"></div>
+        <div class="control-corner bl"></div>
+        <div class="control-corner br"></div>
+        <div class="control-titles">
+          <span class="control-track">Mach 003</span>
+          <span class="control-artist">Apollonia Maria Robin</span>
+        </div>
+        <div class="control-mid">
+          <div class="scrubber" id="scrubber3">
+            <div class="scrub-tooltip" id="scrubTooltip3">0:00</div>
+            <div class="track">
+              <div class="fill" id="scrubberFill3"></div>
+              <div class="knob" id="scrubberKnob3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="ctrl-btn" id="playBtn3" type="button" aria-label="Pause">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="ctrl-btn" id="muteBtn3" type="button" aria-label="Unmute">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stage" id="heroStage4">
+      <div class="hero-frame">
+        <video class="hero-media" id="heroVideo4" muted loop playsinline></video>
+        <div class="audio-indicator" id="audioIndicator4">
+          <div class="audio-indicator-inner">
+            <span class="phrase-a">Audio Off</span>
+            <span class="phrase-b">Click Screen For Audio</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-bar">
+        <div class="control-corner tl"></div>
+        <div class="control-corner tr"></div>
+        <div class="control-corner bl"></div>
+        <div class="control-corner br"></div>
+        <div class="control-titles">
+          <span class="control-track">Mach 004</span>
+          <span class="control-artist">Apollonia Maria Robin</span>
+        </div>
+        <div class="control-mid">
+          <div class="scrubber" id="scrubber4">
+            <div class="scrub-tooltip" id="scrubTooltip4">0:00</div>
+            <div class="track">
+              <div class="fill" id="scrubberFill4"></div>
+              <div class="knob" id="scrubberKnob4"></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="ctrl-btn" id="playBtn4" type="button" aria-label="Pause">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="ctrl-btn" id="muteBtn4" type="button" aria-label="Unmute">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stage" id="heroStage5">
+      <div class="hero-frame">
+        <video class="hero-media" id="heroVideo5" muted loop playsinline></video>
+        <div class="audio-indicator" id="audioIndicator5">
+          <div class="audio-indicator-inner">
+            <span class="phrase-a">Audio Off</span>
+            <span class="phrase-b">Click Screen For Audio</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-bar">
+        <div class="control-corner tl"></div>
+        <div class="control-corner tr"></div>
+        <div class="control-corner bl"></div>
+        <div class="control-corner br"></div>
+        <div class="control-titles">
+          <span class="control-track">Mach 005</span>
+          <span class="control-artist">Apollonia Maria Robin</span>
+        </div>
+        <div class="control-mid">
+          <div class="scrubber" id="scrubber5">
+            <div class="scrub-tooltip" id="scrubTooltip5">0:00</div>
+            <div class="track">
+              <div class="fill" id="scrubberFill5"></div>
+              <div class="knob" id="scrubberKnob5"></div>
+            </div>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="ctrl-btn" id="playBtn5" type="button" aria-label="Pause">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="ctrl-btn" id="muteBtn5" type="button" aria-label="Unmute">
+            <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="scroll-hint" id="scrollHint">
     <span>Scroll</span>
     <svg viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-</section>
-
-<!-- ============================================================
-     VIDEO 2
-============================================================ -->
-<section class="video-section" id="video-2">
-  <div class="hero-stage" id="heroStage2">
-
-    <div class="hero-frame">
-      <video class="hero-media" id="heroVideo2" muted loop playsinline></video>
-      <div class="audio-indicator" id="audioIndicator2">
-        <div class="audio-indicator-inner">
-          <span class="phrase-a">Audio Off</span>
-          <span class="phrase-b">Click Screen For Audio</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="control-bar">
-      <div class="control-corner tl"></div>
-      <div class="control-corner tr"></div>
-      <div class="control-corner bl"></div>
-      <div class="control-corner br"></div>
-
-      <div class="control-titles">
-        <span class="control-track">Mach 002</span>
-        <span class="control-artist">Apollonia Maria Robin</span>
-      </div>
-
-      <div class="control-mid">
-        <div class="scrubber" id="scrubber2">
-          <div class="scrub-tooltip" id="scrubTooltip2">0:00</div>
-          <div class="track">
-            <div class="fill" id="scrubberFill2"></div>
-            <div class="knob" id="scrubberKnob2"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="control-actions">
-        <button class="ctrl-btn" id="playBtn2" type="button" aria-label="Pause">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.4" height="12" fill="currentColor"/><rect x="9.6" y="2" width="3.4" height="12" fill="currentColor"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M4 2.5L13 8L4 13.5V2.5Z" fill="currentColor"/></svg>
-        </button>
-        <button class="ctrl-btn" id="muteBtn2" type="button" aria-label="Unmute">
-          <svg class="icon-default" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.4 5.4C11.2 6.2 11.2 9.8 10.4 10.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M12 3.6C13.7 5.4 13.7 10.6 12 12.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-          <svg class="icon-alt" viewBox="0 0 16 16" fill="none"><path d="M2 6H4.6L8.4 3V13L4.6 10H2V6Z" fill="currentColor"/><path d="M10.8 5.6L14 9.4M14 5.6L10.8 9.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-        </button>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -675,12 +800,34 @@
 
 <script>
 /* =====================================================================
-   VIDEO SOURCES — set the file name for each video here.
-   Keep the .mp4 file(s) in the same folder as this index.html.
+   VIDEO SOURCES
+   ---------------------------------------------------------------------
+   You're on GitHub, so here's the quickest way to add each video —
+   the same way you added "reel.mp4" with your "Add hero video" commit:
+
+     1. Open your repo on github.com and go into the SAME folder that
+        already contains index.html and reel.mp4 (the repo root, most
+        likely).
+     2. Click "Add file" → "Upload files" near the top right.
+     3. Drag in the next video (e.g. reel2.mp4) — you can rename it in
+        the upload box first if you want a different filename.
+     4. Scroll down, write a commit message the same way you did for
+        the first one, e.g. "Add video 2", and click "Commit changes".
+     5. Repeat for reel3.mp4, reel4.mp4, reel5.mp4 as you have them —
+        upload as many or as few as you're ready with, the rest can
+        stay empty for now and will just show as a placeholder tile.
+
+   Each line below is one of the 5 slots (Mach 001–005) already wired
+   up on the page. Just set "src" to the filename you uploaded — no
+   other code needs to change. Leave src:"" to leave a slot as a
+   placeholder until you're ready.
 ===================================================================== */
 
-const VIDEO_1 = { src: "reel.mp4", poster: "" };
+const VIDEO_1 = { src: "reel.mp4",  poster: "" };
 const VIDEO_2 = { src: "reel2.mp4", poster: "" };
+const VIDEO_3 = { src: "",          poster: "" };
+const VIDEO_4 = { src: "",          poster: "" };
+const VIDEO_5 = { src: "",          poster: "" };
 
 /* ===================================================================== */
 
@@ -696,13 +843,12 @@ function formatTime(seconds){
 
 /* ---------------------------------------------------------
    Generic stage controller — wires up one video + its bar:
-   play/pause, mute/unmute, hover-scrub tooltip, audio
-   indicator, and play-only-when-in-view behaviour.
+   play/pause, mute/unmute, hover-scrub tooltip, and the
+   audio indicator. Which stage is actually visible/playing
+   is handled separately by the carousel logic further down.
 --------------------------------------------------------- */
 function initVideoStage(cfg){
   const video = document.getElementById(cfg.videoId);
-  const stage = document.getElementById(cfg.stageId);
-  const frame = video.closest('.hero-frame');
   const playBtn = document.getElementById(cfg.playBtnId);
   const muteBtn = document.getElementById(cfg.muteBtnId);
   const scrubber = document.getElementById(cfg.scrubberId);
@@ -710,6 +856,7 @@ function initVideoStage(cfg){
   const scrubberKnob = document.getElementById(cfg.scrubberKnobId);
   const scrubTooltip = document.getElementById(cfg.scrubTooltipId);
   const audioIndicator = document.getElementById(cfg.audioIndicatorId);
+  const frame = video.closest('.hero-frame');
 
   if(cfg.video.src){
     video.src = cfg.video.src;
@@ -819,57 +966,93 @@ function initVideoStage(cfg){
   window.addEventListener('mouseup', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
   window.addEventListener('touchend', () => { isScrubbing = false; scrubTooltip.classList.remove('is-visible'); });
 
-  /* Play only while this video is actually on screen. */
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if(entry.isIntersecting && entry.intersectionRatio > .6){
-        video.play();
-      } else {
-        video.pause();
-      }
-    });
-  }, { threshold:[0, .6, 1] });
-  observer.observe(stage);
-
   updatePlayIcon();
   updateMuteIcon();
 }
 
-initVideoStage({
-  video: VIDEO_1,
-  videoId: 'heroVideo1', stageId: 'heroStage1',
-  playBtnId: 'playBtn1', muteBtnId: 'muteBtn1',
-  scrubberId: 'scrubber1', scrubberFillId: 'scrubberFill1', scrubberKnobId: 'scrubberKnob1',
-  scrubTooltipId: 'scrubTooltip1', audioIndicatorId: 'audioIndicator1'
-});
+const STAGES = [
+  { video: VIDEO_1, videoId: 'heroVideo1', stageId: 'heroStage1', playBtnId: 'playBtn1', muteBtnId: 'muteBtn1', scrubberId: 'scrubber1', scrubberFillId: 'scrubberFill1', scrubberKnobId: 'scrubberKnob1', scrubTooltipId: 'scrubTooltip1', audioIndicatorId: 'audioIndicator1' },
+  { video: VIDEO_2, videoId: 'heroVideo2', stageId: 'heroStage2', playBtnId: 'playBtn2', muteBtnId: 'muteBtn2', scrubberId: 'scrubber2', scrubberFillId: 'scrubberFill2', scrubberKnobId: 'scrubberKnob2', scrubTooltipId: 'scrubTooltip2', audioIndicatorId: 'audioIndicator2' },
+  { video: VIDEO_3, videoId: 'heroVideo3', stageId: 'heroStage3', playBtnId: 'playBtn3', muteBtnId: 'muteBtn3', scrubberId: 'scrubber3', scrubberFillId: 'scrubberFill3', scrubberKnobId: 'scrubberKnob3', scrubTooltipId: 'scrubTooltip3', audioIndicatorId: 'audioIndicator3' },
+  { video: VIDEO_4, videoId: 'heroVideo4', stageId: 'heroStage4', playBtnId: 'playBtn4', muteBtnId: 'muteBtn4', scrubberId: 'scrubber4', scrubberFillId: 'scrubberFill4', scrubberKnobId: 'scrubberKnob4', scrubTooltipId: 'scrubTooltip4', audioIndicatorId: 'audioIndicator4' },
+  { video: VIDEO_5, videoId: 'heroVideo5', stageId: 'heroStage5', playBtnId: 'playBtn5', muteBtnId: 'muteBtn5', scrubberId: 'scrubber5', scrubberFillId: 'scrubberFill5', scrubberKnobId: 'scrubberKnob5', scrubTooltipId: 'scrubTooltip5', audioIndicatorId: 'audioIndicator5' }
+];
 
-initVideoStage({
-  video: VIDEO_2,
-  videoId: 'heroVideo2', stageId: 'heroStage2',
-  playBtnId: 'playBtn2', muteBtnId: 'muteBtn2',
-  scrubberId: 'scrubber2', scrubberFillId: 'scrubberFill2', scrubberKnobId: 'scrubberKnob2',
-  scrubTooltipId: 'scrubTooltip2', audioIndicatorId: 'audioIndicator2'
-});
+STAGES.forEach(initVideoStage);
+
+/* ---------------------------------------------------------
+   INTERNAL VIDEO CAROUSEL
+   - Scrolling (wheel or touch) with the cursor INSIDE the
+     video box advances/retreats between videos. This never
+     moves the page itself — it's purely a swap of which
+     .hero-stage has "is-active", so a video that isn't shown
+     simply doesn't exist visually.
+   - It's clamped at both ends: you can't scroll past the
+     first or last video from inside the box — you have to
+     move outside the box to reach Contact.
+--------------------------------------------------------- */
+const stageEls = STAGES.map(s => ({
+  el: document.getElementById(s.stageId),
+  video: document.getElementById(s.videoId)
+}));
+
+let currentIndex = 0;
+let carouselLocked = false;
+
+function showStage(newIndex){
+  newIndex = Math.min(stageEls.length - 1, Math.max(0, newIndex));
+  if(newIndex === currentIndex) return;
+  const leaving = stageEls[currentIndex];
+  const entering = stageEls[newIndex];
+  leaving.el.classList.remove('is-active');
+  leaving.video.pause();
+  entering.el.classList.add('is-active');
+  entering.video.play();
+  currentIndex = newIndex;
+}
+
+function advanceStage(dir){
+  if(carouselLocked) return;
+  const newIndex = currentIndex + dir;
+  if(newIndex < 0 || newIndex > stageEls.length - 1) return; // clamp — no wraparound, no leak to Contact
+  carouselLocked = true;
+  showStage(newIndex);
+  setTimeout(() => { carouselLocked = false; }, 550);
+}
 
 /* ---------------------------------------------------------
    SCROLL ROUTING
-   - Wheel/touch input while the pointer is over a video
-     stage (.hero-stage) uses the normal snap-scroll behaviour,
-     moving one video at a time.
-   - Wheel/touch input anywhere else (the surrounding black
-     letterboxing) jumps straight to the Contact section, so
-     it's always one scroll away and never gets "stuck" behind
-     the video snap points. Scrolling up from outside a stage
-     returns straight to the top video.
+   - Wheel/touch input inside the video box (.hero-stage-wrap)
+     drives the carousel above and never scrolls the page.
+   - Wheel/touch input anywhere else jumps straight to Contact,
+     or back to video one if scrolling up — always smoothly,
+     and locked briefly after each move so rapid trackpad
+     scrolling doesn't chain into a jagged, repeated jump.
 --------------------------------------------------------- */
 const topSection = document.getElementById('top');
 const contactSection = document.getElementById('contact');
 
+let isRouting = false;
+function routeTo(section){
+  if(isRouting) return;
+  isRouting = true;
+  section.scrollIntoView({ behavior:'smooth' });
+  setTimeout(() => { isRouting = false; }, 900);
+}
+
 window.addEventListener('wheel', (e) => {
-  if(e.target.closest('.hero-stage')) return; // let normal snap-scrolling happen
+  if(e.target.closest('.hero-stage-wrap')){
+    e.preventDefault();
+    advanceStage(e.deltaY > 0 ? 1 : -1);
+    return;
+  }
   e.preventDefault();
-  const target = e.deltaY > 0 ? contactSection : topSection;
-  target.scrollIntoView({ behavior:'smooth' });
+  if(e.deltaY > 0){
+    routeTo(contactSection);
+  } else {
+    showStage(0);
+    routeTo(topSection);
+  }
 }, { passive:false });
 
 let touchStartY = 0;
@@ -881,21 +1064,30 @@ window.addEventListener('touchstart', (e) => {
 }, { passive:true });
 
 window.addEventListener('touchend', (e) => {
-  if(touchStartTarget && touchStartTarget.closest('.hero-stage')) return; // let normal snap-scrolling happen
   const deltaY = touchStartY - e.changedTouches[0].clientY;
   if(Math.abs(deltaY) < 30) return; // ignore taps
-  const target = deltaY > 0 ? contactSection : topSection;
-  target.scrollIntoView({ behavior:'smooth' });
+
+  if(touchStartTarget && touchStartTarget.closest('.hero-stage-wrap')){
+    advanceStage(deltaY > 0 ? 1 : -1);
+    return;
+  }
+
+  if(deltaY > 0){
+    routeTo(contactSection);
+  } else {
+    showStage(0);
+    routeTo(topSection);
+  }
 }, { passive:true });
 
-/* Fade out the scroll hint once the user has scrolled past video 1 */
+/* Fade out the scroll hint once the user has scrolled past the video section */
 const scrollHint = document.getElementById('scrollHint');
 const hintObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     scrollHint.classList.toggle('is-hidden', entry.intersectionRatio < .95);
   });
 }, { threshold:[0, .95, 1] });
-hintObserver.observe(document.getElementById('top'));
+hintObserver.observe(topSection);
 
 /* ---------------------------------------------------------
    PRELOADER — corner brackets draw in around the name, then
