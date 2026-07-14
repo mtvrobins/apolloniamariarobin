@@ -207,7 +207,6 @@
     gap:14px;
     opacity:0;
     pointer-events:none;
-    transition:opacity .6s var(--ease);
   }
 
   .hero-stage.is-active{
@@ -237,6 +236,39 @@
     background:
       radial-gradient(120% 90% at 15% 10%, #1c1c1a 0%, #0a0a0a 55%),
       repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 90px);
+  }
+
+  /* ---------------------------------------------------------
+     STAGE TRANSITION — a solid black screen with the track
+     label, shown for 1s and then faded out, BEFORE the next
+     video is allowed to start. Sits above everything so the
+     switch between videos never overlaps or shows a flash of
+     the video underneath.
+  --------------------------------------------------------- */
+  .stage-transition{
+    position:absolute;
+    inset:0;
+    z-index:5;
+    background:var(--black);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .5s var(--ease);
+  }
+
+  .stage-transition.is-visible{
+    opacity:1;
+  }
+
+  .stage-transition span{
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--white);
   }
 
   /* ---------------------------------------------------------
@@ -295,6 +327,48 @@
 
   @media (prefers-reduced-motion: reduce){
     .audio-indicator span{ animation:none; opacity:.35; }
+  }
+
+  /* ---------------------------------------------------------
+     NEXT VIDEO — plain-text button between the video box and
+     the scrubber. No border, no arrow, just a subtle left-to-
+     right glimmer sweeping across the text on a slow, classy
+     loop (never reverses — always resets back to left).
+  --------------------------------------------------------- */
+  .next-video-btn{
+    align-self:center;
+    background:none;
+    border:none;
+    padding:2px 0;
+    cursor:pointer;
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    background-image:linear-gradient(
+      90deg,
+      rgba(244,244,242,0.5) 0%,
+      rgba(244,244,242,0.5) 40%,
+      #ffffff 50%,
+      rgba(244,244,242,0.5) 60%,
+      rgba(244,244,242,0.5) 100%
+    );
+    background-size:260% 100%;
+    background-position:160% 0;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    animation:glimmer 4.2s linear infinite;
+  }
+
+  @keyframes glimmer{
+    0%   { background-position:160% 0; }
+    100% { background-position:-160% 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .next-video-btn{ animation:none; background-position:0 0; }
   }
 
   /* ---------------------------------------------------------
@@ -440,7 +514,8 @@
   .ctrl-btn.is-active .icon-alt{ display:block; }
 
   /* ---------------------------------------------------------
-     SCROLL HINT — minimal cue shown while on video one
+     SCROLL HINT — a quiet bouncing arrow at the very bottom
+     of the video section (no label text).
   --------------------------------------------------------- */
   .scroll-hint{
     position:absolute;
@@ -448,22 +523,14 @@
     bottom:26px;
     transform:translateX(-50%);
     display:flex;
-    flex-direction:column;
     align-items:center;
-    gap:8px;
+    justify-content:center;
     opacity:.6;
     transition:opacity .5s var(--ease);
     z-index:3;
   }
 
   .scroll-hint.is-hidden{ opacity:0; }
-
-  .scroll-hint span{
-    font-size:10px;
-    letter-spacing:.3em;
-    text-transform:uppercase;
-    color:var(--grey);
-  }
 
   .scroll-hint svg{
     width:12px;
@@ -506,11 +573,14 @@
     font-size:clamp(24px, 4vw, 46px);
     font-weight:600;
     letter-spacing:-.01em;
-    border-bottom:1px solid var(--line);
-    padding-bottom:14px;
-    transition:border-color .3s ease, opacity .3s ease;
+    color:rgba(244,244,242,0.55);
+    text-shadow:0 0 0 rgba(244,244,242,0);
+    transition:color .4s var(--ease), text-shadow .4s var(--ease);
   }
-  .contact-email:hover{ border-color:var(--white); opacity:.8; }
+  .contact-email:hover{
+    color:var(--white);
+    text-shadow:0 0 18px rgba(244,244,242,0.55), 0 0 40px rgba(244,244,242,0.25);
+  }
 
   .contact-phone{
     font-size:15px;
@@ -548,7 +618,7 @@
   <div class="pl-corner br"></div>
   <div class="pl-inner">
     <div class="pl-name">Apollonia Maria Robin</div>
-    <div class="pl-sub">Portfolio &bull; Mach 001</div>
+    <div class="pl-sub">Visual Film Diary</div>
   </div>
 </div>
 
@@ -562,15 +632,22 @@
      All five video slots (Mach 001–005) live stacked inside
      .hero-stage-wrap below. Only the one with "is-active" is
      visible — the rest don't exist visually until the user
-     scrolls with their cursor INSIDE this video box, which the
-     script below turns into "advance to the next/previous video"
-     instead of a normal page scroll. Scrolling anywhere outside
-     the box (the black space around it) goes straight to the
-     Contact section instead — you'll never see another video
-     appear underneath this one.
+     scrolls with their cursor INSIDE this video box (or clicks
+     the "Next Video" text under a video), which the script below
+     turns into "advance to the next/previous video" instead of a
+     normal page scroll. Each switch shows a solid black screen
+     with the track's label for 1s, then fades to reveal the new
+     video — the video never starts until that label is gone, so
+     nothing ever overlaps. Scrolling anywhere outside the box
+     goes straight to Contact instead — you'll never see another
+     video appear underneath this one.
 ============================================================ -->
 <section class="video-section" id="top">
   <div class="hero-stage-wrap">
+
+    <div class="stage-transition" id="stageTransition">
+      <span id="stageTransitionLabel">Mach 001</span>
+    </div>
 
     <div class="hero-stage is-active" id="heroStage1">
       <div class="hero-frame">
@@ -582,6 +659,7 @@
           </div>
         </div>
       </div>
+      <button class="next-video-btn" type="button">Next Video</button>
       <div class="control-bar">
         <div class="control-corner tl"></div>
         <div class="control-corner tr"></div>
@@ -623,6 +701,7 @@
           </div>
         </div>
       </div>
+      <button class="next-video-btn" type="button">Next Video</button>
       <div class="control-bar">
         <div class="control-corner tl"></div>
         <div class="control-corner tr"></div>
@@ -664,6 +743,7 @@
           </div>
         </div>
       </div>
+      <button class="next-video-btn" type="button">Next Video</button>
       <div class="control-bar">
         <div class="control-corner tl"></div>
         <div class="control-corner tr"></div>
@@ -705,6 +785,7 @@
           </div>
         </div>
       </div>
+      <button class="next-video-btn" type="button">Next Video</button>
       <div class="control-bar">
         <div class="control-corner tl"></div>
         <div class="control-corner tr"></div>
@@ -780,7 +861,6 @@
   </div>
 
   <div class="scroll-hint" id="scrollHint">
-    <span>Scroll</span>
     <svg viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
 </section>
@@ -894,13 +974,15 @@ function initVideoStage(cfg){
   playBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
   muteBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
 
-  /* First tap/click on the video frame unmutes it.
-     Once unmuted, tapping the frame toggles play/pause. */
+  /* Clicking the video frame toggles audio only — it never pauses
+     the video. First click unmutes; clicking again re-mutes. The
+     video just keeps playing throughout; only the play button
+     (in the control bar) actually pauses it. */
   frame.addEventListener('click', () => {
     if(video.muted){
       unmute();
     } else {
-      togglePlay();
+      toggleMute();
     }
   });
 
@@ -983,32 +1065,54 @@ STAGES.forEach(initVideoStage);
 /* ---------------------------------------------------------
    INTERNAL VIDEO CAROUSEL
    - Scrolling (wheel or touch) with the cursor INSIDE the
-     video box advances/retreats between videos. This never
-     moves the page itself — it's purely a swap of which
-     .hero-stage has "is-active", so a video that isn't shown
-     simply doesn't exist visually.
-   - It's clamped at both ends: you can't scroll past the
-     first or last video from inside the box — you have to
-     move outside the box to reach Contact.
+     video box, or clicking a "Next Video" button, advances
+     between videos. This never moves the page itself — a
+     video that isn't shown simply doesn't exist visually.
+   - Every switch shows a solid black screen with the track's
+     label for 1 second, then fades it out — the next video
+     only starts playing once that label is fully gone, so
+     nothing ever overlaps.
+   - Clamped at both ends: you can't go past the first or last
+     video from inside the box — you have to move outside the
+     box to reach Contact.
 --------------------------------------------------------- */
 const stageEls = STAGES.map(s => ({
   el: document.getElementById(s.stageId),
-  video: document.getElementById(s.videoId)
+  video: document.getElementById(s.videoId),
+  label: document.getElementById(s.stageId).querySelector('.control-track').textContent
 }));
+
+const stageTransition = document.getElementById('stageTransition');
+const stageTransitionLabel = document.getElementById('stageTransitionLabel');
 
 let currentIndex = 0;
 let carouselLocked = false;
 
+const TRANSITION_HOLD_MS = 1000; // black screen + label held for 1s
+const TRANSITION_FADE_MS = 500;  // then fades out before video starts
+
 function showStage(newIndex){
   newIndex = Math.min(stageEls.length - 1, Math.max(0, newIndex));
   if(newIndex === currentIndex) return;
+
   const leaving = stageEls[currentIndex];
   const entering = stageEls[newIndex];
+  currentIndex = newIndex;
+
   leaving.el.classList.remove('is-active');
   leaving.video.pause();
-  entering.el.classList.add('is-active');
-  entering.video.play();
-  currentIndex = newIndex;
+
+  stageTransitionLabel.textContent = entering.label;
+  stageTransition.classList.add('is-visible');
+
+  setTimeout(() => {
+    entering.el.classList.add('is-active');
+    stageTransition.classList.remove('is-visible');
+
+    setTimeout(() => {
+      entering.video.play();
+    }, TRANSITION_FADE_MS);
+  }, TRANSITION_HOLD_MS);
 }
 
 function advanceStage(dir){
@@ -1017,8 +1121,12 @@ function advanceStage(dir){
   if(newIndex < 0 || newIndex > stageEls.length - 1) return; // clamp — no wraparound, no leak to Contact
   carouselLocked = true;
   showStage(newIndex);
-  setTimeout(() => { carouselLocked = false; }, 550);
+  setTimeout(() => { carouselLocked = false; }, TRANSITION_HOLD_MS + TRANSITION_FADE_MS + 150);
 }
+
+document.querySelectorAll('.next-video-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => { e.stopPropagation(); advanceStage(1); });
+});
 
 /* ---------------------------------------------------------
    SCROLL ROUTING
@@ -1037,7 +1145,7 @@ function routeTo(section){
   if(isRouting) return;
   isRouting = true;
   section.scrollIntoView({ behavior:'smooth' });
-  setTimeout(() => { isRouting = false; }, 900);
+  setTimeout(() => { isRouting = false; }, 1000);
 }
 
 window.addEventListener('wheel', (e) => {
